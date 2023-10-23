@@ -5,14 +5,20 @@ using UnityEngine;
 using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Transforms;
+using UnityEngine.InputSystem;
+using System.Drawing.Printing;
 
 
 [DisableAutoCreation]
 public partial class PlayerInputSystem : GameSystemBase
 {
+    private PlayerInputActions m_playerInputActions;
+
     public PlayerInputSystem(GameWorld world) : base(world)
     {
-
+        m_playerInputActions = new PlayerInputActions();
+        m_playerInputActions.Enable();
+        m_playerInputActions.Gameplay.Enable();
     }
 
     protected override void OnCreate()
@@ -24,10 +30,9 @@ public partial class PlayerInputSystem : GameSystemBase
     {
         var mainCamera = Camera.main;
 
-        var horizontal = Input.GetAxis("Horizontal");
-        var vertical = Input.GetAxis("Vertical");
-        horizontal = math.clamp(horizontal, -1, 1);
-        vertical = math.clamp(vertical, -1, 1);
+
+        float2 inputMove = Vector2.ClampMagnitude(m_playerInputActions.Gameplay.Move.ReadValue<Vector2>(), 1f);
+        float2 inputLook = m_playerInputActions.Gameplay.Look.ReadValue<Vector2>() * 2f;
 
         var config = SystemAPI.GetSingleton<GameConfig>();
         var playerSpeed = config.PlayerSpeed;
@@ -37,7 +42,7 @@ public partial class PlayerInputSystem : GameSystemBase
                  SystemAPI.Query<RefRW<LocalTransform>>()
                  .WithAll<Player>())
         {
-            var move = new float3(horizontal, 0, vertical);
+            var move = new float3(inputMove.x, 0, inputMove.y);
             move = move * playerSpeed * deltaTime;
             transform.ValueRW.Position += move;
 
