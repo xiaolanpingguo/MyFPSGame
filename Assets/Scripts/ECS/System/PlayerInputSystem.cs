@@ -7,7 +7,7 @@ using Unity.Collections;
 using Unity.Transforms;
 using UnityEngine.InputSystem;
 using System.Drawing.Printing;
-
+using UnityEngine.Rendering.Universal;
 
 [DisableAutoCreation]
 public partial class PlayerInputSystem : GameSystemBase
@@ -40,14 +40,19 @@ public partial class PlayerInputSystem : GameSystemBase
         var playerSpeed = config.PlayerSpeed;
 
         float deltaTime = SystemAPI.Time.DeltaTime;
-        foreach (var transform in
+        foreach (var (transform, entity) in
                  SystemAPI.Query<RefRW<LocalTransform>>()
-                 .WithAll<Player>())
+                 .WithAll<Player>()
+                 .WithEntityAccess())
         {
+            var characterController = m_world.GetEntityManager().GetComponentObject<CharacterController>(entity);
+
             // Move
             var move = new float3(inputMove.x, 0, inputMove.y);
             move = move * playerSpeed * deltaTime;
             transform.ValueRW.Position += move;
+            characterController.Move(move);
+            
             mainCamera.transform.position = transform.ValueRW.Position;
 
             // Look
