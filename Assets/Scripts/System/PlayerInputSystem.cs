@@ -13,6 +13,8 @@ using System.Drawing.Printing;
 public partial class PlayerInputSystem : GameSystemBase
 {
     private PlayerInputActions m_playerInputActions;
+    private float angleY;
+    private float angleX;
 
     public PlayerInputSystem(GameWorld world) : base(world)
     {
@@ -42,12 +44,19 @@ public partial class PlayerInputSystem : GameSystemBase
                  SystemAPI.Query<RefRW<LocalTransform>>()
                  .WithAll<Player>())
         {
+            // Move
             var move = new float3(inputMove.x, 0, inputMove.y);
             move = move * playerSpeed * deltaTime;
             transform.ValueRW.Position += move;
-
             mainCamera.transform.position = transform.ValueRW.Position;
-            mainCamera.transform.rotation = transform.ValueRW.Rotation;
+
+            // Look
+            angleY = angleY + inputLook.x;
+            transform.ValueRW = transform.ValueRW.RotateY(angleY);
+
+            angleX = angleX + (-inputLook.y);
+            angleX = Mathf.Clamp(angleX, -90f, 90f);
+            mainCamera.transform.eulerAngles = new Vector3(angleX, angleY, mainCamera.transform.eulerAngles.z);
         }
     }
 }
